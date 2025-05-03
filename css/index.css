@@ -1,0 +1,140 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f2f2f2;
+    color: #333;
+  }
+  
+  h1, h2 {
+    text-align: center;
+    padding: 10px;
+    margin: 0;
+  }
+  
+  form {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  
+  input, select, button {
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    font-size: 16px;
+    box-sizing: border-box;
+  }
+  
+  button {
+    background: #ff4500;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background: #e03e00;
+  }
+  
+  table {
+    width: 95%;
+    margin: 10px auto;
+    background: white;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 14px;
+  }
+  
+  th, td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+  }
+  
+  @media (max-width: 600px) {
+    table, thead, tbody, th, td, tr {
+      display: block;
+    }
+  
+    tr {
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+    }
+  
+    th {
+      display: none;
+    }
+  
+    td {
+      text-align: left;
+      padding-left: 40%;
+      position: relative;
+    }
+  
+    td::before {
+      position: absolute;
+      left: 10px;
+      font-weight: bold;
+    }
+  
+    td:nth-child(1)::before { content: "Cliente"; }
+    td:nth-child(2)::before { content: "Sabores"; }
+    td:nth-child(3)::before { content: "Total"; }
+
+  }
+
+  .checkbox-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    font-size: 15px;
+    margin: 10px 0;
+  }
+  
+  .checkbox-group.full-width {
+    width: 100%;
+  }
+  
+
+  .sabores-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  
+  .sabores-box label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 6px 10px;
+    background: #fff;
+  }
+
+  .btn-estatus {
+    width: 35px !important;
+    height: 35px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    font-size: 16px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+  }
+  
+  
+  
+  
