@@ -100,7 +100,8 @@ function agregarFila(pedido, index) {
     // Construir detalles del pedido
     const detalle = pedido.pizzas.map(p => {
         const orilla = p.orilla ? " (orilla)" : "";
-        return `${p.sabores}${orilla} - $${p.total}`;
+        const size = primeraLetraMayuscula(p.tamano); 
+        return `${size} - ${p.sabores}${orilla} - $${p.total}`;
     }).join("<br>");
 
     const filaHTML = `
@@ -127,6 +128,11 @@ function agregarFila(pedido, index) {
     td.innerHTML = filaHTML;
     tr.appendChild(td);
     tabla.appendChild(tr);
+}
+
+function primeraLetraMayuscula(texto) {
+  if (!texto || typeof texto !== "string") return "";
+  return texto.charAt(0).toUpperCase();
 }
 
 
