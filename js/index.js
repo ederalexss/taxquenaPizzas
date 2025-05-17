@@ -1,6 +1,8 @@
 const form = document.getElementById('formulario');
 const tabla = document.querySelector('#tabla tbody');
 let indexPedidoEditando = null;
+let paginaActual = 1;
+const pedidosPorPagina = 3;
 
 let pizzasActuales = [];
 
@@ -12,46 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-form.addEventListener('submit', function (e) {
-    e.preventDefault();
-
-    const cliente = document.getElementById('cliente').value.trim();
-    if (!cliente) {
-        alert("Ingresa el nombre del cliente.");
-        return;
-    }
-
-    // Capturamos pizza actual si aún no se agregó
-    const tamano = document.getElementById('tamano').value;
-    const orilla = document.getElementById('orilla').checked;
-    const seleccionados = Array.from(document.querySelectorAll('input[name="sabor"]:checked'));
-    const saborArray = seleccionados.map(cb => cb.value);
-    const sabores = saborArray.join(', ');
-    const promo = document.getElementById('refresco').value;
-
-    if (tamano && saborArray.length >= 1 && saborArray.length <= 4) {
-
-        let descripcionPizza = "";
-
-        if (promo === "promo_medianas") {
-            const medianas = pizzasActuales.filter(p => p.tamano === "mediana");
-            if (medianas.length >= 2) {
-                descripcionPizza = "Promo: 2 medianas + refresco";
-            } else {
-                alert("La promoción seleccionada no aplica.");
-                return;
-            }
-        }
-        const totalPizza = calcularPrecio(tamano, orilla, saborArray, promo);
-
-        if (promo === "promo_grande" && tamano === "grande") {
-            descripcionPizza = "Incluye refresco 2L (Promo grande)";
-        }
-
-        pizzasActuales.push({ tamano, sabores, orilla, total: totalPizza, descripcion: descripcionPizza });
-    }
-
-    ordenarHamburguesas();
+finalizarPedido = () => {
 
     if (pizzasActuales.length === 0) {
         alert("Debes agregar al menos un producto (pizza, hamburguesa o papas).");
@@ -60,35 +23,22 @@ form.addEventListener('submit', function (e) {
 
     // Aplicar promoción si corresponde
     let total = pizzasActuales.reduce((sum, p) => sum + p.total, 0);
-
-    const pedido = { cliente, pizzas: pizzasActuales, total, estatus: 'Preparando' };
-    guardarPedido(pedido);
-    pizzasActuales = [];
-    actualizarTabla();
-    renderizarCarrito();
-    actualizarRestriccionesPromo();
-    form.reset();
-    actualizarTotal(); // no olvides esto si tienes total del día
-});
-
-finalizarPedido = () => {
-    const cliente = document.getElementById('cliente').value.trim();
-    if (!cliente) {
-        alert("Ingresa el nombre del cliente.");
-        return;
-    }
-
-    // Aplicar promoción si corresponde
-    let total = pizzasActuales.reduce((sum, p) => sum + p.total, 0);
-
-    const pedido = { cliente, pizzas: pizzasActuales, total, estatus: 'Preparando' };
+    let folio = folioPedido();
+    const pedido = { cliente: folio, pizzas: pizzasActuales, total, estatus: 'Preparando' };
     guardarPedido(pedido);
     pizzasActuales = [];
     actualizarTabla();
     renderizarCarrito();
     actualizarRestriccionesPromo();
     actualizarTotal(); // no olvides esto si tienes total del día
-    document.getElementById('cliente').value = ""; // Limpiar el campo de cliente
+}
+
+folioPedido = () => {
+    let ultimoFolio = parseInt(localStorage.getItem('folioPedido') || '0');
+    ultimoFolio++;
+    const folio = `PED-${ultimoFolio.toString().padStart(4, '0')}`;
+    localStorage.setItem('folioPedido', ultimoFolio);
+    return folio;
 }
 
 function calcularPrecio(tamano, orilla, saborArray, promo) {
@@ -123,58 +73,68 @@ function guardarPedido(pedido) {
 
 function mostrarPedidos() {
     const pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
-    pedidos.forEach((p, i) => agregarFila(p, i));
+    const pedidosInvertidos = pedidos.slice().reverse();
+
+    const totalPaginas = Math.ceil(pedidosInvertidos.length / pedidosPorPagina);
+    const inicio = (paginaActual - 1) * pedidosPorPagina;
+    const fin = inicio + pedidosPorPagina;
+
+    const pedidosPagina = pedidosInvertidos.slice(inicio, fin);
+
+    const tabla = document.querySelector("#tabla tbody");
+    tabla.innerHTML = "";
+
+    pedidosPagina.forEach((pedido, index) => {
+        agregarFila(pedido, pedidos.length - 1 - (inicio + index));
+    });
+
+    renderizarPaginador(totalPaginas);
 }
 
 function agregarFila(pedido, index) {
-    const productosAgrupados = {};
+    const tabla = document.querySelector("#tabla tbody");
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 4;
 
-    // Agrupa productos
-    pedido.pizzas.forEach(p => {
-        const clave = `${p.tamano}|${p.sabores}|${p.orilla ? 'orilla' : ''}|${p.total}`;
-        if (!productosAgrupados[clave]) {
-            productosAgrupados[clave] = { ...p, cantidad: 1 };
-        } else {
-            productosAgrupados[clave].cantidad++;
-        }
-    });
+    // Construir detalles del pedido
+    const detalle = pedido.pizzas.map(p => {
+        const orilla = p.orilla ? " (orilla)" : "";
+        return `${p.sabores}${orilla} - $${p.total}`;
+    }).join("<br>");
 
-    const detalle = Object.values(productosAgrupados).map(p => {
-        const orillaTexto = p.orilla ? ' (orilla)' : '';
-        const totalProducto = p.total * p.cantidad;
-        const esGrande = p.tamano === "grande";
-        const promoGrandeActiva = p.descripcion && p.descripcion.includes('Promo grande');
-        const promoMedianasActiva = p.descripcion && p.descripcion.includes('Promo: 2 medianas');
-
-        // Mostrar ícono si aplica la promo
-        const promoIcono = promoGrandeActiva && esGrande ? ' 🥤' : promoMedianasActiva ? ' 🥤' : " ";
-
-        return `• ${p.cantidad}x ${p.tamano} ${p.sabores}${orillaTexto}${promoIcono} - $${totalProducto}`;
-    }).join('<br>');
-
-
-    const fila = document.createElement("tr");
-    fila.innerHTML = `
-      <td>${pedido.cliente}</td>
-      <td colspan="2">${detalle}</td>
-      <td>
-        $${pedido.total}<br>
-        <span class="badge ${obtenerClaseEstatus(pedido.estatus)}">${pedido.estatus}</span><br>
-        <div class="d-flex justify-content-center gap-1 mt-2">
-          <button class="btn btn-success btn-estatus" onclick="cambiarEstatus(${index}, 'Entregado')" title="Entregado">✅</button>
-          <button class="btn btn-danger btn-estatus" onclick="cambiarEstatus(${index}, 'Cancelado')" title="Cancelado">❌</button>
-          <button class="btn btn-primary btn-estatus" onclick="editarPedido(${index})" title="Editar">✏️</button>
-          <button class="btn btn-secondary btn-estatus" onclick="eliminarPedido(${index})" title="Eliminar">🗑</button>
+    const filaHTML = `
+      <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+          <div class="mb-1"><strong>Folio:</strong> ${pedido.cliente}</div>
+          <div class="mb-1"><strong>Sabores:</strong><br> ${detalle}</div>
+          <div class="mb-2"><strong>Total:</strong> $${pedido.total}</div>
+          <div class="mb-2">
+            <span class="badge bg-${pedido.estatus === 'Entregado' ? 'success' : pedido.estatus === 'Cancelado' ? 'danger' : 'warning'} text-dark">
+              ${pedido.estatus}
+            </span>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-success btn-estatus" onclick="cambiarEstatus(${index}, 'Entregado')" title="Entregado">✅</button>
+            <button class="btn btn-danger btn-estatus" onclick="cambiarEstatus(${index}, 'Cancelado')" title="Cancelado">❌</button>
+            <button class="btn btn-primary btn-estatus" onclick="cambiarEstatus(${index}, 'Preparando')" title="Preparando">🕓</button>
+            <button class="btn btn-secondary btn-estatus" onclick="eliminarPedido(${index})" title="Eliminar">🗑</button>
+          </div>
         </div>
-      </td>
+      </div>
     `;
-    tabla.appendChild(fila);
+
+    td.innerHTML = filaHTML;
+    tr.appendChild(td);
+    tabla.appendChild(tr);
 }
+
 
 function limpiarPedidos() {
     localStorage.removeItem('pedidos');
     tabla.innerHTML = '';
     actualizarTotal();
+    renderizarPaginador(0); // Reiniciar paginador
 }
 
 function actualizarTotal() {
@@ -209,10 +169,6 @@ function agregarPizza() {
         pizzasActuales.push({ tamano, sabores, orilla, total, descripcion, estatus: 'Preparando' });
     }
 
-    if (pizzasActuales.length === 0) {
-        alert("Debes agregar al menos un producto (pizza, hamburguesa o papas).");
-        return;
-    }
     actualizarRestriccionesPromo();
     limpiarFormulario();
     renderizarCarrito();
@@ -572,6 +528,57 @@ function agregarBoneless() {
     document.getElementById('tipoBoneless').value = "";
     document.getElementById('comentarioBoneless').value = "";
 }
+
+function renderizarPaginador(totalPaginas) {
+    const contenedor = document.getElementById("paginador");
+    contenedor.innerHTML = "";
+
+    const ul = document.createElement("ul");
+    ul.className = "pagination justify-content-center";
+
+    // Botón anterior
+    const liPrev = document.createElement("li");
+    liPrev.className = `page-item ${paginaActual === 1 ? 'disabled' : ''}`;
+    liPrev.innerHTML = `<button class="page-link">«</button>`;
+    liPrev.onclick = () => {
+        if (paginaActual > 1) {
+            paginaActual--;
+            mostrarPedidos();
+        }
+    };
+    ul.appendChild(liPrev);
+
+    // Botones por página (máx 5 visibles)
+    const maxVisibles = 5;
+    const startPage = Math.max(1, paginaActual - Math.floor(maxVisibles / 2));
+    const endPage = Math.min(totalPaginas, startPage + maxVisibles - 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement("li");
+        li.className = `page-item ${i === paginaActual ? 'active' : ''}`;
+        li.innerHTML = `<button class="page-link">${i}</button>`;
+        li.onclick = () => {
+            paginaActual = i;
+            mostrarPedidos();
+        };
+        ul.appendChild(li);
+    }
+
+    // Botón siguiente
+    const liNext = document.createElement("li");
+    liNext.className = `page-item ${paginaActual === totalPaginas ? 'disabled' : ''}`;
+    liNext.innerHTML = `<button class="page-link">»</button>`;
+    liNext.onclick = () => {
+        if (paginaActual < totalPaginas) {
+            paginaActual++;
+            mostrarPedidos();
+        }
+    };
+    ul.appendChild(liNext);
+
+    contenedor.appendChild(ul);
+}
+
 
 
 

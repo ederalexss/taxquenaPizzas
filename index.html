@@ -102,11 +102,8 @@
                             </div>
                             <br>
 
-                            <label>Nombre del cliente:</label>
-                            <input type="text" id="cliente" placeholder="Ej. Juan Pérez" required>
-                            <br>
-
-                            <button type="button"  class="btn btn-success"  onclick="agregarPizza()">Agregar Pizza</button>
+                            <button type="button" class="btn btn-success" onclick="agregarPizza()">Agregar
+                                Pizza</button>
                             <br>
                         </form>
                     </div>
@@ -230,6 +227,9 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+                <nav>
+                    <ul class="pagination justify-content-center" id="paginador"></ul>
+                </nav>
                 <h4>Total del día: <span id="totalDia">$0</span></h4>
                 <button class="btn btn-secondary mt-2" onclick="exportarPDF()">Exportar a PDF</button>
                 <button class="btn btn-danger mt-2" onclick="limpiarPedidos()">Limpiar pedidos</button>
