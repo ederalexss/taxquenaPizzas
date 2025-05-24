@@ -2,7 +2,7 @@ const form = document.getElementById('formulario');
 const tabla = document.querySelector('#tabla tbody');
 let indexPedidoEditando = null;
 let paginaActual = 1;
-const pedidosPorPagina = 3;
+const pedidosPorPagina = 4;
 
 let pizzasActuales = [];
 
@@ -83,6 +83,14 @@ function mostrarPedidos() {
 
     const tabla = document.querySelector("#tabla tbody");
     tabla.innerHTML = "";
+    
+    // Crear una única fila y contenedor para todas las cards
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 4;
+    td.innerHTML = '<div class="container"><div class="row" id="pedidosContainer"></div></div>';
+    tr.appendChild(td);
+    tabla.appendChild(tr);
 
     pedidosPagina.forEach((pedido, index) => {
         agregarFila(pedido, pedidos.length - 1 - (inicio + index));
@@ -92,42 +100,39 @@ function mostrarPedidos() {
 }
 
 function agregarFila(pedido, index) {
-    const tabla = document.querySelector("#tabla tbody");
-    const tr = document.createElement("tr");
-    const td = document.createElement("td");
-    td.colSpan = 4;
-
+    const contenedor = document.querySelector("#pedidosContainer");
+    
     // Construir detalles del pedido
     const detalle = pedido.pizzas.map(p => {
         const orilla = p.orilla ? " (orilla)" : "";
-        const size = primeraLetraMayuscula(p.tamano); 
-        return `${size} - ${p.sabores}${orilla} - $${p.total}`;
+        const size = primeraLetraMayuscula(p.tamano);
+        const comentario = p.comentario ? `<br><small class="text-muted"><i>Nota: ${p.comentario}</i></small>` : '';
+        return `${size} - ${p.sabores}${orilla} - $${p.total}${comentario}`;
     }).join("<br>");
 
-    const filaHTML = `
-      <div class="card mb-3 shadow-sm">
-        <div class="card-body">
-          <div class="mb-1"><strong>Folio:</strong> ${pedido.cliente}</div>
-          <div class="mb-1"><strong>Sabores:</strong><br> ${detalle}</div>
-          <div class="mb-2"><strong>Total:</strong> $${pedido.total}</div>
-          <div class="mb-2">
-            <span class="badge bg-${pedido.estatus === 'Entregado' ? 'success' : pedido.estatus === 'Cancelado' ? 'danger' : 'warning'} text-dark">
-              ${pedido.estatus}
-            </span>
-          </div>
-          <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-success btn-estatus" onclick="cambiarEstatus(${index}, 'Entregado')" title="Entregado">✅</button>
-            <button class="btn btn-danger btn-estatus" onclick="cambiarEstatus(${index}, 'Cancelado')" title="Cancelado">❌</button>
-            <button class="btn btn-primary btn-estatus" onclick="cambiarEstatus(${index}, 'Preparando')" title="Preparando">🕓</button>
-            <button class="btn btn-secondary btn-estatus" onclick="eliminarPedido(${index})" title="Eliminar">🗑</button>
-          </div>
+    const card = document.createElement('div');
+    card.className = "col-12 col-md-6 col-lg-4";
+    card.innerHTML = `
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+                <div class="mb-1"><strong>Folio:</strong> ${pedido.cliente}</div>
+                <div class="mb-1"><strong>Sabores:</strong><br> ${detalle}</div>
+                <div class="mb-2"><strong>Total:</strong> $${pedido.total}</div>
+                <div class="mb-2">
+                    <span class="badge bg-${pedido.estatus === 'Entregado' ? 'success' : pedido.estatus === 'Cancelado' ? 'danger' : 'warning'} text-dark">
+                        ${pedido.estatus}
+                    </span>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-success btn-estatus" onclick="cambiarEstatus(${index}, 'Entregado')" title="Entregado">✅</button>
+                    <button class="btn btn-primary btn-estatus" onclick="cambiarEstatus(${index}, 'Preparando')" title="Preparando">🕓</button>
+                    <button class="btn btn-secondary btn-estatus" onclick="eliminarPedido(${index})" title="Eliminar">🗑</button>
+                </div>
+            </div>
         </div>
-      </div>
     `;
-
-    td.innerHTML = filaHTML;
-    tr.appendChild(td);
-    tabla.appendChild(tr);
+    
+    contenedor.appendChild(card);
 }
 
 function primeraLetraMayuscula(texto) {
@@ -156,6 +161,7 @@ function agregarPizza() {
     const saborArray = seleccionados.map(cb => cb.value);
     const sabores = saborArray.join(', ');
     const promo = document.getElementById('refresco').value;
+    const comentario = document.getElementById('comentarioPizza').value.trim();
 
     let descripcion = "";
     if (promo === "promo_medianas") {
@@ -172,7 +178,7 @@ function agregarPizza() {
             return;
         }
         const total = calcularPrecio(tamano, orilla, saborArray, promo);
-        pizzasActuales.push({ tamano, sabores, orilla, total, descripcion, estatus: 'Preparando' });
+        pizzasActuales.push({ tamano, sabores, orilla, total, descripcion, comentario, estatus: 'Preparando' });
     }
 
     actualizarRestriccionesPromo();
@@ -189,6 +195,7 @@ limpiarFormulario = () => {
     document.getElementById('tamano').value = "";
     document.querySelectorAll('input[name="sabor"]').forEach(cb => cb.checked = false);
     document.getElementById('orilla').checked = false;
+    document.getElementById('comentarioPizza').value = "";
 
     // Hamburguesas y papas (si usas inputs numéricos)
     ['burgerSencilla', 'burgerHawaiana', 'burgerArrachera', 'papas'].forEach(id => {

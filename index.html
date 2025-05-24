@@ -102,6 +102,11 @@
                             </div>
                             <br>
 
+                             <div class="mb-3">
+                                <label for="comentarioPizza" class="form-label">Comentario extra (opcional):</label>
+                                <textarea id="comentarioPizza" class="form-control" rows="2"></textarea>
+                            </div>
+
                             <button type="button" class="btn btn-success" onclick="agregarPizza()">Agregar
                                 Pizza</button>
                             <br>
@@ -218,13 +223,7 @@
             <div class="tab-pane fade" id="pedidos" role="tabpanel">
                 <h2>Pedidos</h2>
                 <table class="table table-bordered" id="tabla">
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th colspan="2">Pizzas</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
+                    
                     <tbody></tbody>
                 </table>
                 <nav>
