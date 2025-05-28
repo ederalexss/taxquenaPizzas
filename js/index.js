@@ -2,7 +2,7 @@ const form = document.getElementById('formulario');
 const tabla = document.querySelector('#tabla tbody');
 let indexPedidoEditando = null;
 let paginaActual = 1;
-const pedidosPorPagina = 4;
+const pedidosPorPagina = 6;
 
 let pizzasActuales = [];
 
@@ -42,26 +42,47 @@ folioPedido = () => {
 }
 
 function calcularPrecio(tamano, orilla, saborArray, promo) {
-
     const tipoA = ["hawaiana", "peperoni", "quesos"];
     const tipoB = ["pastor", "vegetariana", "taxqueña", "carnes frías"];
+    const tipoPremium = ["cochinita"];
+    const extraQueso = "extra queso";
 
     if (tamano === "individual") return 40;
-    if (tamano === "mediana") return orilla ? 160 : promo === "promo_medianas" ? 110 : 125;
-    if (tamano === "cuadripizza") return orilla ? 400 : 330;
 
-    if (tamano === "grande") {
-        const contieneSoloA = saborArray.every(s => tipoA.includes(s.toLowerCase()));
-        const contieneSoloB = saborArray.every(s => tipoB.includes(s.toLowerCase()));
+    // Verificar si contiene extra queso
+    const tieneExtraQueso = saborArray.some(s => s.toLowerCase() === extraQueso);
+    let precioBase = 0;
 
-        if (contieneSoloA) return orilla ? 185 : 150;
-        if (contieneSoloB) return orilla ? 195 : 160;
-
-        // Combinación entre A y B => usamos la opción más cara (tipo B)
-        return orilla ? 195 : 160;
+    // Verificar si contiene cochinita
+    const contieneCochinita = saborArray.some(s => tipoPremium.includes(s.toLowerCase()));
+    
+    if (tamano === "mediana") {
+        if (contieneCochinita) {
+            precioBase = saborArray.length === 1 ? 145 : 125; // completa o mitad
+        } else {
+            precioBase = promo === "promo_medianas" ? 110 : 125;
+        }
+    } else if (tamano === "cuadripizza") {
+        precioBase = 330;
+    } else if (tamano === "grande") {
+        if (contieneCochinita) {
+            precioBase = saborArray.length === 1 ? 180 : 160; // completa o mitad
+        } else {
+            const contieneSoloA = saborArray.every(s => tipoA.includes(s.toLowerCase()));
+            const contieneSoloB = saborArray.every(s => tipoB.includes(s.toLowerCase()));
+            
+            if (contieneSoloA) precioBase = 150;
+            else if (contieneSoloB) precioBase = 160;
+            else precioBase = 160; // Combinación A y B
+        }
     }
 
-    return 0;
+    // Agregar cargo por orilla y/o extra queso
+    let precioFinal = precioBase;
+    if (orilla) precioFinal += 35;
+    if (tieneExtraQueso) precioFinal += 40;
+
+    return precioFinal;
 }
 
 function guardarPedido(pedido) {
@@ -107,32 +128,96 @@ function agregarFila(pedido, index) {
         const orilla = p.orilla ? " (orilla)" : "";
         const size = primeraLetraMayuscula(p.tamano);
         const comentario = p.comentario ? `<br><small class="text-muted"><i>Nota: ${p.comentario}</i></small>` : '';
-        return `${size} - ${p.sabores}${orilla} - $${p.total}${comentario}`;
-    }).join("<br>");
+        return `<li class="fs-6">${size} - ${p.sabores}${orilla} - <strong>$${p.total}</strong>${comentario}</li>`;
+    }).join("");
 
     const card = document.createElement('div');
     card.className = "col-12 col-md-6 col-lg-4";
     card.innerHTML = `
         <div class="card mb-3 shadow-sm">
-            <div class="card-body">
-                <div class="mb-1"><strong>Folio:</strong> ${pedido.cliente}</div>
-                <div class="mb-1"><strong>Sabores:</strong><br> ${detalle}</div>
-                <div class="mb-2"><strong>Total:</strong> $${pedido.total}</div>
+            <div class="card-body position-relative">
+                <!-- Menú desplegable en la esquina superior derecha -->
+                <div class="position-absolute top-0 end-0 mt-2 me-2">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            ⋮
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><button class="dropdown-item" onclick="cambiarEstatus(${index}, 'Entregado')">✅ Entregado</button></li>
+                            <li><button class="dropdown-item" onclick="cambiarEstatus(${index}, 'Preparando')">🕓 Preparando</button></li>
+                            <li><button class="dropdown-item" onclick="capturarNombreCliente(${index})">✏️ Capturar nombre</button></li>
+                            <li><button class="dropdown-item" onclick="manejarCambio(${index})">💵 Manejar cambio</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item text-danger" onclick="eliminarPedido(${index})">🗑 Eliminar</button></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Información del pedido -->
                 <div class="mb-2">
-                    <span class="badge bg-${pedido.estatus === 'Entregado' ? 'success' : pedido.estatus === 'Cancelado' ? 'danger' : 'warning'} text-dark">
+                    <strong class="fs-5 fw-bold">Folio:</strong> <span class="fs-6">${pedido.cliente}</span>
+                </div>
+                ${
+                    pedido.nombreCliente 
+                        ? `<div class="mb-2"><strong class="fs-5 fw-bold">Cliente:</strong> <span id="nombreCliente-${index}" class="fs-6">${pedido.nombreCliente}</span></div>`
+                        : ''
+                }
+                <div class="mb-2">
+                    <strong class="fs-5 fw-bold">Sabores:</strong>
+                    <ul class="list-unstyled ps-3">${detalle}</ul>
+                </div>
+                <div class="mb-2">
+                    <strong class="fs-5 fw-bold">Total:</strong> <span class="text-success fs-6">$${pedido.total}</span>
+                </div>
+                ${
+                    pedido.conCambio
+                        ? `<div class="mb-2 text-warning"><strong class="fs-5 fw-bold">Nota:</strong> <span class="fs-6">El cliente pagará con cambio.</span></div>`
+                        : pedido.cambio !== undefined
+                            ? `<div class="mb-2"><strong class="fs-5 fw-bold">Cambio:</strong> <span class="text-primary fs-6">$${pedido.cambio}</span></div>`
+                            : ''
+                }
+                <div class="mt-3">
+                    <span class="badge bg-${pedido.estatus === 'Entregado' ? 'success' : pedido.estatus === 'Cancelado' ? 'danger' : 'warning'} text-dark fs-6">
                         ${pedido.estatus}
                     </span>
-                </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    <button class="btn btn-success btn-estatus" onclick="cambiarEstatus(${index}, 'Entregado')" title="Entregado">✅</button>
-                    <button class="btn btn-primary btn-estatus" onclick="cambiarEstatus(${index}, 'Preparando')" title="Preparando">🕓</button>
-                    <button class="btn btn-secondary btn-estatus" onclick="eliminarPedido(${index})" title="Eliminar">🗑</button>
                 </div>
             </div>
         </div>
     `;
     
     contenedor.appendChild(card);
+}
+
+// Nueva función para manejar el flujo de cambio
+function manejarCambio(index) {
+    const pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
+    const pedido = pedidos[index];
+
+    // Mostrar opciones al usuario
+    const opcion = prompt("Seleccione una opción:\n1. Con cambio\n2. Ingresar monto", "1");
+
+    if (opcion === "1") {
+        // Opción "Con cambio"
+        pedido.conCambio = true; // Marcar que el cliente pagará con cambio
+        delete pedido.cambio; // Eliminar cualquier monto de cambio previo
+        localStorage.setItem('pedidos', JSON.stringify(pedidos));
+        actualizarTabla(); // Redibujar la tabla para reflejar los cambios
+    } else if (opcion === "2") {
+        // Opción "Ingresar monto"
+        const montoCliente = prompt("Ingrese el monto con el que pagará el cliente:", "");
+
+        if (montoCliente !== null && !isNaN(montoCliente) && parseFloat(montoCliente) >= pedido.total) {
+            const cambio = parseFloat(montoCliente) - pedido.total;
+            pedido.cambio = cambio.toFixed(2); // Guardar el cambio con 2 decimales
+            delete pedido.conCambio; // Eliminar la indicación de "con cambio" si se ingresa un monto
+            localStorage.setItem('pedidos', JSON.stringify(pedidos));
+            actualizarTabla(); // Redibujar la tabla para reflejar el cambio
+        } else if (montoCliente !== null) {
+            alert("El monto ingresado no es válido o es menor al total.");
+        }
+    } else {
+        alert("Opción no válida. Intente nuevamente.");
+    }
 }
 
 function primeraLetraMayuscula(texto) {
@@ -562,7 +647,7 @@ function renderizarPaginador(totalPaginas) {
     ul.appendChild(liPrev);
 
     // Botones por página (máx 5 visibles)
-    const maxVisibles = 5;
+    const maxVisibles = 10;
     const startPage = Math.max(1, paginaActual - Math.floor(maxVisibles / 2));
     const endPage = Math.min(totalPaginas, startPage + maxVisibles - 1);
 

@@ -108,19 +108,44 @@ body {
   
 
   .sabores-box {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
   }
   
-  .sabores-box label {
+  .sabor-label {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 6px 10px;
-    background: #fff;
+    gap: 10px;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+  }
+
+  .sabor-label input[type="checkbox"] {
+    display: none;
+  }
+
+  .sabor-label span {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .sabor-label:hover {
+    background-color: #e9ecef;
+    border-color: #ccc;
+  }
+
+  .sabor-label input[type="checkbox"]:checked + span {
+    font-weight: bold;
+    color: #fff;
+    background-color: #0d6efd;
+    padding: 5px 10px;
+    border-radius: 5px;
   }
 
   .btn-estatus {
@@ -145,8 +170,7 @@ body {
     justify-content: center;
     font-size: 18px;
   }
-  
-  
-  
-  
-  
+
+
+
+
