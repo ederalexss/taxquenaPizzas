@@ -24,7 +24,8 @@ finalizarPedido = () => {
     // Aplicar promoción si corresponde
     let total = pizzasActuales.reduce((sum, p) => sum + p.total, 0);
     let folio = folioPedido();
-    const pedido = { cliente: folio, pizzas: pizzasActuales, total, estatus: 'Preparando' };
+    const fechaHora = new Date().toLocaleString();
+    const pedido = { cliente: folio, pizzas: pizzasActuales, total, estatus: 'Preparando',fechaHora};
     guardarPedido(pedido);
     pizzasActuales = [];
     actualizarTabla();
@@ -688,6 +689,64 @@ function renderizarPaginador(totalPaginas) {
     contenedor.appendChild(ul);
 }
 
+function registrarFinanza() {
+    const tipo = document.getElementById('tipoRegistro').value;
+    const monto = parseFloat(document.getElementById('montoRegistro').value);
+    const descripcion = document.getElementById('descripcionRegistro').value.trim();
+    const fechaHora = new Date().toLocaleString();
+
+    if (!monto || monto <= 0) {
+        alert("Ingrese un monto válido.");
+        return;
+    }
+
+    const registro = { tipo, monto, descripcion, fechaHora };
+    const finanzas = JSON.parse(localStorage.getItem('finanzas')) || [];
+    finanzas.push(registro);
+    localStorage.setItem('finanzas', JSON.stringify(finanzas));
+
+    actualizarTablaFinanzas();
+    document.getElementById('formFinanzas').reset();
+}
+
+function actualizarTablaFinanzas() {
+    const finanzas = JSON.parse(localStorage.getItem('finanzas')) || [];
+    const tabla = document.getElementById('tablaFinanzas');
+    tabla.innerHTML = "";
+
+    let totalIngresos = 0;
+    let totalGastos = 0;
+
+    finanzas.forEach(registro => {
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+            <td>${registro.fechaHora}</td>
+            <td>${registro.tipo === 'ingreso' ? 'Ingreso' : 'Gasto'}</td>
+            <td>$${registro.monto.toFixed(2)}</td>
+            <td>${registro.descripcion || 'Sin descripción'}</td>
+        `;
+        tabla.appendChild(fila);
+
+        // Calcular totales
+        if (registro.tipo === 'ingreso') {
+            totalIngresos += registro.monto;
+        } else if (registro.tipo === 'gasto') {
+            totalGastos += registro.monto;
+        }
+    });
+
+    // Mostrar totales
+    const totalesDiv = document.getElementById('totalesFinanzas');
+    totalesDiv.innerHTML = `
+        <p><strong>Total Ingresos:</strong> $${totalIngresos.toFixed(2)}</p>
+        <p><strong>Total Gastos:</strong> $${totalGastos.toFixed(2)}</p>
+        <p><strong>Balance:</strong> $${(totalIngresos - totalGastos).toFixed(2)}</p>
+    `;
+}
+
+// Inicializar tabla de finanzas al cargar la página
+document.addEventListener('DOMContentLoaded', actualizarTablaFinanzas);
+
 function incrementar(id) {
     const element = document.getElementById(id);
     let value = parseInt(element.value);
@@ -701,6 +760,8 @@ function decrementar(id) {
         element.value = value - 1;
     }
 }
+
+
 
 
 

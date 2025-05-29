@@ -213,6 +213,13 @@ body {
     pointer-events: none; /* Evita que el usuario edite el valor */
 }
 
+#finanzas {
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
 
 
 

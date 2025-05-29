@@ -29,6 +29,11 @@
                     Ver Pedidos
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="finanzas-tab" data-bs-toggle="tab" data-bs-target="#finanzas" type="button" role="tab">
+                    Finanzas
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content mt-3" id="pizzeriaTabsContent">
@@ -269,6 +274,44 @@
                 <h4>Total del día: <span id="totalDia">$0</span></h4>
                 <button class="btn btn-secondary mt-2" onclick="exportarPDF()">Exportar a PDF</button>
                 <button class="btn btn-danger mt-2" onclick="limpiarPedidos()">Limpiar pedidos</button>
+            </div>
+
+            <!-- TAB 3 - FINANZAS -->
+            <div class="tab-pane fade" id="finanzas" role="tabpanel">
+                <h2>Finanzas</h2>
+                <form id="formFinanzas">
+                    <div class="mb-3">
+                        <label for="tipoRegistro" class="form-label">Tipo de registro:</label>
+                        <select id="tipoRegistro" class="form-select">
+                            <option value="ingreso">Ingreso</option>
+                            <option value="gasto">Gasto</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="montoRegistro" class="form-label">Monto:</label>
+                        <input type="number" id="montoRegistro" class="form-control" placeholder="Ingrese el monto" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcionRegistro" class="form-label">Descripción:</label>
+                        <textarea id="descripcionRegistro" class="form-control" rows="2" placeholder="Ingrese una descripción"></textarea>
+                    </div>
+                    <button type="button" class="btn btn-success" onclick="registrarFinanza()">Registrar</button>
+                </form>
+                <h3 class="mt-4">Historial</h3>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Fecha y Hora</th>
+                            <th>Tipo</th>
+                            <th>Monto</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaFinanzas"></tbody>
+                </table>
+                <div id="totalesFinanzas" class="mt-4">
+    <!-- Los totales se actualizarán dinámicamente aquí -->
+</div>
             </div>
         </div>
     </div>
