@@ -122,13 +122,24 @@ function mostrarPedidos() {
 
 function agregarFila(pedido, index) {
     const contenedor = document.querySelector("#pedidosContainer");
-    
-    // Construir detalles del pedido
-    const detalle = pedido.pizzas.map(p => {
+
+    // Agrupar productos iguales
+    const agrupados = {};
+    pedido.pizzas.forEach(p => {
+        const clave = `${p.tamano}|${p.sabores}|${p.orilla}|${p.total}`;
+        if (!agrupados[clave]) {
+            agrupados[clave] = { ...p, cantidad: 1 };
+        } else {
+            agrupados[clave].cantidad++;
+        }
+    });
+
+    // Construir detalles del pedido agrupado
+    const detalle = Object.values(agrupados).map(p => {
         const orilla = p.orilla ? " (orilla)" : "";
         const size = primeraLetraMayuscula(p.tamano);
         const comentario = p.comentario ? `<br><small class="text-muted"><i>Nota: ${p.comentario}</i></small>` : '';
-        return `<li class="fs-6">${size} - ${p.sabores}${orilla} - <strong>$${p.total}</strong>${comentario}</li>`;
+        return `<li class="fs-6">${p.cantidad > 1 ? `${p.cantidad}x ` : ''}${size} - ${p.sabores}${orilla} - <strong>$${p.total}</strong>${comentario}</li>`;
     }).join("");
 
     const card = document.createElement('div');
