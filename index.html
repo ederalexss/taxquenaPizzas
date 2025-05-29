@@ -144,22 +144,31 @@
                         <div class="row align-items-center mb-2">
                             <div class="col-7">Sencilla ($85)</div>
                             <div class="col-5">
-                                <input type="number" id="burgerSencilla" data-precio="85"
-                                    class="form-control form-control-sm" min="0" value="0">
+                                <div class="quantity-control">
+                                    <button type="button" class="btn-quantity" onclick="decrementar('burgerSencilla')">-</button>
+                                    <input type="text" id="burgerSencilla" data-precio="85" class="quantity-value" value="0">
+                                    <button type="button" class="btn-quantity" onclick="incrementar('burgerSencilla')">+</button>
+                                </div>
                             </div>
                         </div>
                         <div class="row align-items-center mb-2">
-                            <div class="col-7">Hawaiana ($85)</div>
+                            <div class="col-7">Hawaiana ($100)</div>
                             <div class="col-5">
-                                <input type="number" id="burgerHawaiana" data-precio="100"
-                                    class="form-control form-control-sm" min="0" value="0">
+                                <div class="quantity-control">
+                                    <button type="button" class="btn-quantity" onclick="decrementar('burgerHawaiana')">-</button>
+                                    <input type="text" id="burgerHawaiana" data-precio="100" class="quantity-value" value="0" readonly>
+                                    <button type="button" class="btn-quantity" onclick="incrementar('burgerHawaiana')">+</button>
+                                </div>
                             </div>
                         </div>
                         <div class="row align-items-center mb-2">
-                            <div class="col-7">Arrachera ($85)</div>
+                            <div class="col-7">Arrachera ($100)</div>
                             <div class="col-5">
-                                <input type="number" id="burgerArrachera" data-precio="100"
-                                    class="form-control form-control-sm" min="0" value="0">
+                                <div class="quantity-control">
+                                    <button type="button" class="btn-quantity" onclick="decrementar('burgerArrachera')">-</button>
+                                    <input type="text" id="burgerArrachera" data-precio="100" class="quantity-value" value="0" readonly>
+                                    <button type="button" class="btn-quantity" onclick="incrementar('burgerArrachera')">+</button>
+                                </div>
                             </div>
                         </div>
 
@@ -167,8 +176,11 @@
                         <div class="row align-items-center mb-2">
                             <div class="col-7">Orden de papas ($45)</div>
                             <div class="col-5">
-                                <input type="number" id="papas" data-precio="45" class="form-control form-control-sm"
-                                    min="0" value="0">
+                                 <div class="quantity-control">
+                                    <button type="button" class="btn-quantity" onclick="decrementar('papas')">-</button>
+                                    <input type="text" id="papas" data-precio="45" class="quantity-value" value="0" readonly>
+                                    <button type="button" class="btn-quantity" onclick="incrementar('papas')">+</button>
+                                 </div>
                             </div>
                         </div>
                         <br>

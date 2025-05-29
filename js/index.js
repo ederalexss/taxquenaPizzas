@@ -677,6 +677,20 @@ function renderizarPaginador(totalPaginas) {
     contenedor.appendChild(ul);
 }
 
+function incrementar(id) {
+    const element = document.getElementById(id);
+    let value = parseInt(element.value);
+    element.value = value + 1;
+}
+
+function decrementar(id) {
+    const element = document.getElementById(id);
+    let value = parseInt(element.value);
+    if (value > 0) {
+        element.value = value - 1;
+    }
+}
+
 
 
 
