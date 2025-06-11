@@ -6,6 +6,8 @@ const pedidosPorPagina = 6;
 
 let pizzasActuales = [];
 
+// Inicializar tabla de finanzas al cargar la página
+document.addEventListener('DOMContentLoaded', actualizarTablaFinanzas);
 document.addEventListener('DOMContentLoaded', mostrarPedidos);
 document.addEventListener('DOMContentLoaded', actualizarTotal);
 document.addEventListener('DOMContentLoaded', renderizarCarrito);
@@ -17,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
 finalizarPedido = () => {
 
     if (pizzasActuales.length === 0) {
-        alert("Debes agregar al menos un producto (pizza, hamburguesa o papas).");
+        mostrarAlerta("Debes agregar al menos un producto (pizza, hamburguesa o papas).");
         return;
     }
 
@@ -25,13 +27,14 @@ finalizarPedido = () => {
     let total = pizzasActuales.reduce((sum, p) => sum + p.total, 0);
     let folio = folioPedido();
     const fechaHora = new Date().toLocaleString();
-    const pedido = { cliente: folio, pizzas: pizzasActuales, total, estatus: 'Preparando',fechaHora};
+    const pedido = { cliente: folio, pizzas: pizzasActuales, total, estatus: 'Preparando', fechaHora };
     guardarPedido(pedido);
     pizzasActuales = [];
     actualizarTabla();
     renderizarCarrito();
     actualizarRestriccionesPromo();
     actualizarTotal(); // no olvides esto si tienes total del día
+    mostrarAlerta(`Pedido ${folio} registrado con éxito.`, 'success');
 }
 
 folioPedido = () => {
@@ -43,20 +46,25 @@ folioPedido = () => {
 }
 
 function calcularPrecio(tamano, orilla, saborArray, promo) {
+
     const tipoA = ["hawaiana", "peperoni", "quesos"];
     const tipoB = ["pastor", "vegetariana", "taxqueña", "carnes frías"];
     const tipoPremium = ["cochinita"];
     const extraQueso = "extra queso";
 
-    if (tamano === "individual") return 40;
+    let precioBase = 0;
+
+    if (tamano === "individual") {
+        precioBase = 40;
+        if (orilla) precioBase = 60;
+    }
 
     // Verificar si contiene extra queso
     const tieneExtraQueso = saborArray.some(s => s.toLowerCase() === extraQueso);
-    let precioBase = 0;
 
     // Verificar si contiene cochinita
     const contieneCochinita = saborArray.some(s => tipoPremium.includes(s.toLowerCase()));
-    
+
     if (tamano === "mediana") {
         if (contieneCochinita) {
             precioBase = saborArray.length === 1 ? 145 : 125; // completa o mitad
@@ -65,13 +73,14 @@ function calcularPrecio(tamano, orilla, saborArray, promo) {
         }
     } else if (tamano === "cuadripizza") {
         precioBase = 330;
+        if (orilla) precioBase = 400;
     } else if (tamano === "grande") {
         if (contieneCochinita) {
             precioBase = saborArray.length === 1 ? 180 : 160; // completa o mitad
         } else {
             const contieneSoloA = saborArray.every(s => tipoA.includes(s.toLowerCase()));
             const contieneSoloB = saborArray.every(s => tipoB.includes(s.toLowerCase()));
-            
+
             if (contieneSoloA) precioBase = 150;
             else if (contieneSoloB) precioBase = 160;
             else precioBase = 160; // Combinación A y B
@@ -80,7 +89,7 @@ function calcularPrecio(tamano, orilla, saborArray, promo) {
 
     // Agregar cargo por orilla y/o extra queso
     let precioFinal = precioBase;
-    if (orilla) precioFinal += 35;
+    if (orilla && (tamano === "grande" || tamano === "mediana")) precioFinal += 35;
     if (tieneExtraQueso) precioFinal += 40;
 
     return precioFinal;
@@ -105,7 +114,7 @@ function mostrarPedidos() {
 
     const tabla = document.querySelector("#tabla tbody");
     tabla.innerHTML = "";
-    
+
     // Crear una única fila y contenedor para todas las cards
     const tr = document.createElement("tr");
     const td = document.createElement("td");
@@ -169,11 +178,10 @@ function agregarFila(pedido, index) {
                 <div class="mb-2">
                     <strong class="fs-5 fw-bold">Folio:</strong> <span class="fs-6">${pedido.cliente}</span>
                 </div>
-                ${
-                    pedido.nombreCliente 
-                        ? `<div class="mb-2"><strong class="fs-5 fw-bold">Cliente:</strong> <span id="nombreCliente-${index}" class="fs-6">${pedido.nombreCliente}</span></div>`
-                        : ''
-                }
+                ${pedido.nombreCliente
+            ? `<div class="mb-2"><strong class="fs-5 fw-bold">Cliente:</strong> <span id="nombreCliente-${index}" class="fs-6">${pedido.nombreCliente}</span></div>`
+            : ''
+        }
                 <div class="mb-2">
                     <strong class="fs-5 fw-bold">Sabores:</strong>
                     <ul class="list-unstyled ps-3">${detalle}</ul>
@@ -181,13 +189,12 @@ function agregarFila(pedido, index) {
                 <div class="mb-2">
                     <strong class="fs-5 fw-bold">Total:</strong> <span class="text-success fs-6">$${pedido.total}</span>
                 </div>
-                ${
-                    pedido.conCambio
-                        ? `<div class="mb-2 text-warning"><strong class="fs-5 fw-bold">Nota:</strong> <span class="fs-6">El cliente pagará con cambio.</span></div>`
-                        : pedido.cambio !== undefined
-                            ? `<div class="mb-2"><strong class="fs-5 fw-bold">Cambio:</strong> <span class="text-primary fs-6">$${pedido.cambio}</span></div>`
-                            : ''
-                }
+                ${pedido.conCambio
+            ? `<div class="mb-2 text-warning"><strong class="fs-5 fw-bold">Nota:</strong> <span class="fs-6">El cliente pagará con cambio.</span></div>`
+            : pedido.cambio !== undefined
+                ? `<div class="mb-2"><strong class="fs-5 fw-bold">Cambio:</strong> <span class="text-primary fs-6">$${pedido.cambio}</span></div>`
+                : ''
+        }
                 <div class="mt-3">
                     <span class="badge bg-${pedido.estatus === 'Entregado' ? 'success' : pedido.estatus === 'Cancelado' ? 'danger' : 'warning'} text-dark fs-6">
                         ${pedido.estatus}
@@ -196,45 +203,13 @@ function agregarFila(pedido, index) {
             </div>
         </div>
     `;
-    
+
     contenedor.appendChild(card);
 }
 
-// Nueva función para manejar el flujo de cambio
-function manejarCambio(index) {
-    const pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
-    const pedido = pedidos[index];
-
-    // Mostrar opciones al usuario
-    const opcion = prompt("Seleccione una opción:\n1. Con cambio\n2. Ingresar monto", "1");
-
-    if (opcion === "1") {
-        // Opción "Con cambio"
-        pedido.conCambio = true; // Marcar que el cliente pagará con cambio
-        delete pedido.cambio; // Eliminar cualquier monto de cambio previo
-        localStorage.setItem('pedidos', JSON.stringify(pedidos));
-        actualizarTabla(); // Redibujar la tabla para reflejar los cambios
-    } else if (opcion === "2") {
-        // Opción "Ingresar monto"
-        const montoCliente = prompt("Ingrese el monto con el que pagará el cliente:", "");
-
-        if (montoCliente !== null && !isNaN(montoCliente) && parseFloat(montoCliente) >= pedido.total) {
-            const cambio = parseFloat(montoCliente) - pedido.total;
-            pedido.cambio = cambio.toFixed(2); // Guardar el cambio con 2 decimales
-            delete pedido.conCambio; // Eliminar la indicación de "con cambio" si se ingresa un monto
-            localStorage.setItem('pedidos', JSON.stringify(pedidos));
-            actualizarTabla(); // Redibujar la tabla para reflejar el cambio
-        } else if (montoCliente !== null) {
-            alert("El monto ingresado no es válido o es menor al total.");
-        }
-    } else {
-        alert("Opción no válida. Intente nuevamente.");
-    }
-}
-
 function primeraLetraMayuscula(texto) {
-  if (!texto || typeof texto !== "string") return "";
-  return texto.charAt(0).toUpperCase();
+    if (!texto || typeof texto !== "string") return "";
+    return texto.charAt(0).toUpperCase();
 }
 
 
@@ -281,7 +256,6 @@ function agregarPizza() {
     actualizarRestriccionesPromo();
     limpiarFormulario();
     renderizarCarrito();
-    alert("Pizza agregada al pedido.");
 }
 
 limpiarFormulario = () => {
@@ -744,8 +718,6 @@ function actualizarTablaFinanzas() {
     `;
 }
 
-// Inicializar tabla de finanzas al cargar la página
-document.addEventListener('DOMContentLoaded', actualizarTablaFinanzas);
 
 function incrementar(id) {
     const element = document.getElementById(id);
@@ -761,6 +733,107 @@ function decrementar(id) {
     }
 }
 
+// Nueva función para manejar el flujo de cambio
+function manejarCambio(index) {
+    const pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
+    const pedido = pedidos[index];
+
+    Swal.fire({
+        title: 'Seleccione una opción',
+        input: 'radio',
+        inputOptions: {
+            'conCambio': 'El cliente pagará con cambio',
+            'ingresarMonto': 'Ingresar monto con el que pagará el cliente'
+        },
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Debe seleccionar una opción';
+            }
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Continuar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            if (result.value === 'conCambio') {
+                pedido.conCambio = true; // Marcar que el cliente pagará con cambio
+                delete pedido.cambio; // Eliminar cualquier monto de cambio previo
+                localStorage.setItem('pedidos', JSON.stringify(pedidos));
+                actualizarTabla(); // Redibujar la tabla para reflejar los cambios
+            } else if (result.value === 'ingresarMonto') {
+                Swal.fire({
+                    title: 'Ingrese el monto con el que pagará el cliente',
+                    input: 'number',
+                    inputAttributes: {
+                        min: pedido.total,
+                        step: '0.01'
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'Guardar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    inputValidator: (value) => {
+                        if (!value || isNaN(value) || parseFloat(value) < pedido.total) {
+                            return 'El monto ingresado no es válido o es menor al total.';
+                        }
+                    }
+                }).then((montoResult) => {
+                    if (montoResult.isConfirmed) {
+                        const cambio = parseFloat(montoResult.value) - pedido.total;
+                        pedido.cambio = cambio.toFixed(2); // Guardar el cambio con 2 decimales
+                        delete pedido.conCambio; // Eliminar la indicación de "con cambio" si se ingresa un monto
+                        localStorage.setItem('pedidos', JSON.stringify(pedidos));
+                        actualizarTabla(); // Redibujar la tabla para reflejar el cambio
+                        mostrarAlerta(`Cambio calculado: $${cambio.toFixed(2)}`, 'success');
+                    }
+                });
+            }
+        }
+    });
+}
+
+function capturarNombreCliente(index) {
+    const pedidos = JSON.parse(localStorage.getItem('pedidos')) || [];
+    const pedido = pedidos[index];
+
+    // Usar SweetAlert2 para capturar el nombre del cliente
+    Swal.fire({
+        title: 'Ingrese el nombre del cliente',
+        input: 'text',
+        inputValue: pedido.nombreCliente || '',
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#3085d6',
+        inputValidator: (value) => {
+            if (!value.trim()) {
+                return 'El nombre no puede estar vacío';
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            pedido.nombreCliente = result.value.trim(); // Guardar el nombre del cliente
+            localStorage.setItem('pedidos', JSON.stringify(pedidos)); // Actualizar en localStorage
+            actualizarTabla(); // Redibujar la tabla para reflejar los cambios
+        }
+    });
+}
+
+
+//crear una funcion generica para crear un mensaje con swqqtalert pasandole el texto y el tipo de alerta
+function mostrarAlerta(texto, tipo = 'info') {
+        Swal.fire({
+            icon: tipo,
+            title: texto,
+            showConfirmButton: true,
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#3085d6', // Cambia este color por el que prefieras
+            timer: 3000
+        });
+}
 
 
 
